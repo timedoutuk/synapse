@@ -80,12 +80,16 @@ class ReadMarkerRestServlet(RestServlet):
             # TODO Add validation to reject non-string event IDs.
             if not event_id:
                 continue
+            extra_content = body.get(
+                receipt_type.replace("m.", "com.beeper.") + ".extra", None
+            )
 
             if receipt_type == ReceiptTypes.FULLY_READ:
                 await self.read_marker_handler.received_client_read_marker(
                     room_id,
                     user_id=requester.user.to_string(),
                     event_id=event_id,
+                    extra_content=extra_content,
                 )
             else:
                 await self.receipts_handler.received_client_receipt(
@@ -95,6 +99,7 @@ class ReadMarkerRestServlet(RestServlet):
                     event_id=event_id,
                     # Setting the thread ID is not possible with the /read_markers endpoint.
                     thread_id=None,
+                    extra_content=extra_content,
                 )
 
         return 200, {}
