@@ -161,25 +161,29 @@ class RegistrationHandler:
         localpart: str,
         guest_access_token: str | None = None,
         assigned_user_id: str | None = None,
+        *,
+        allow_invalid: bool = False,
         inhibit_user_in_use_error: bool = False,
     ) -> None:
-        if types.contains_invalid_mxid_characters(localpart):
-            raise SynapseError(
-                400,
-                "User ID can only contain characters a-z, 0-9, or '=_-./+'",
-                Codes.INVALID_USERNAME,
-            )
+        # meow: allow admins to register invalid user ids
+        if not allow_invalid:
+            if types.contains_invalid_mxid_characters(localpart):
+                raise SynapseError(
+                    400,
+                    "User ID can only contain characters a-z, 0-9, or '=_-./+'",
+                    Codes.INVALID_USERNAME,
+                )
 
-        if not localpart:
-            raise SynapseError(400, "User ID cannot be empty", Codes.INVALID_USERNAME)
+            if not localpart:
+                raise SynapseError(400, "User ID cannot be empty", Codes.INVALID_USERNAME)
 
-        if (
-            localpart[0] == "_"
-            and not self.hs.config.registration.allow_underscore_prefixed_localpart
-        ):
-            raise SynapseError(
-                400, "User ID may not begin with _", Codes.INVALID_USERNAME
-            )
+            if (
+                localpart[0] == "_"
+                and not self.hs.config.registration.allow_underscore_prefixed_localpart
+            ):
+                raise SynapseError(
+                    400, "User ID may not begin with _", Codes.INVALID_USERNAME
+                )
 
         user = UserID(localpart, self.hs.hostname)
         user_id = user.to_string()
@@ -193,14 +197,16 @@ class RegistrationHandler:
                     "A different user ID has already been registered for this session",
                 )
 
-        self.check_user_id_not_appservice_exclusive(user_id)
+        # meow: allow admins to register reserved user ids and long user ids
+        if not allow_invalid:
+            self.check_user_id_not_appservice_exclusive(user_id)
 
-        if len(user_id) > MAX_USERID_LENGTH:
-            raise SynapseError(
-                400,
-                "User ID may not be longer than %s characters" % (MAX_USERID_LENGTH,),
-                Codes.INVALID_USERNAME,
-            )
+            if len(user_id) > MAX_USERID_LENGTH:
+                raise SynapseError(
+                    400,
+                    "User ID may not be longer than %s characters" % (MAX_USERID_LENGTH,),
+                    Codes.INVALID_USERNAME,
+                )
 
         users = await self.store.get_users_by_id_case_insensitive(user_id)
         if users:
@@ -306,7 +312,12 @@ class RegistrationHandler:
             await self.auth_blocking.check_auth_blocking(threepid=threepid)
 
         if localpart is not None:
-            await self.check_username(localpart, guest_access_token=guest_access_token)
+            allow_invalid = by_admin and self.hs.config.meow.admin_api_register_invalid
+            await self.check_username(
+                localpart,
+                guest_access_token=guest_access_token,
+                allow_invalid=allow_invalid,
+            )
 
             was_guest = guest_access_token is not None
 
