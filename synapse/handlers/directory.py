@@ -78,9 +78,11 @@ class DirectoryHandler:
     ) -> None:
         # general association creation for both human users and app services
 
-        for wchar in string.whitespace:
-            if wchar in room_alias.localpart:
-                raise SynapseError(400, "Invalid characters in room alias")
+        # meow: allow specific users to include anything in room aliases
+        if creator not in self.config.meow.validation_override:
+            for wchar in string.whitespace:
+                if wchar in room_alias.localpart:
+                    raise SynapseError(400, "Invalid characters in room alias")
 
         if ":" in room_alias.localpart:
             raise SynapseError(400, "Invalid character in room alias localpart: ':'.")
@@ -125,7 +127,10 @@ class DirectoryHandler:
         user_id = requester.user.to_string()
         room_alias_str = room_alias.to_string()
 
-        if len(room_alias_str) > MAX_ALIAS_LENGTH:
+        if (
+            user_id not in self.hs.config.meow.validation_override
+            and len(room_alias_str) > MAX_ALIAS_LENGTH
+        ):
             raise SynapseError(
                 400,
                 "Can't create aliases longer than %s characters" % MAX_ALIAS_LENGTH,

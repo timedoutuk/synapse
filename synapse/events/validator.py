@@ -58,7 +58,7 @@ class EventValidator:
             event: The event to validate.
             config: The homeserver's configuration.
         """
-        self.validate_builder(event)
+        self.validate_builder(event, config)
 
         if event.format_version == EventFormatVersions.ROOM_V1_V2:
             EventID.from_string(event.event_id)
@@ -79,6 +79,13 @@ class EventValidator:
         # Depending on the room version, ensure the data is spec compliant JSON.
         if event.room_version.strict_canonicaljson:
             validate_canonicaljson(event.get_pdu_json())
+
+        if not 0 < event.origin_server_ts < 2**53:
+            raise SynapseError(400, "Event timestamp is out of range")
+
+        # meow: allow specific users to send potentially dangerous events.
+        if event.sender in config.meow.validation_override:
+            return
 
         if event.type == EventTypes.Aliases:
             if "aliases" in event.content:
@@ -177,7 +184,9 @@ class EventValidator:
                 errcode=Codes.BAD_JSON,
             )
 
-    def validate_builder(self, event: EventBase | EventBuilder) -> None:
+    def validate_builder(
+        self, event: EventBase | EventBuilder, config: HomeServerConfig
+    ) -> None:
         """Validates that the builder/event has roughly the right format. Only
         checks values that we expect a proto event to have, rather than all the
         fields an event would have
@@ -211,6 +220,10 @@ class EventValidator:
                 raise SynapseError(400, f"Invalid room ID '{event.room_id}'")
 
         UserID.from_string(event.sender)
+
+        # meow: allow specific users to send so-called invalid events
+        if event.sender in config.meow.validation_override:
+            return
 
         if event.type == EventTypes.Message:
             strings = ["body", "msgtype"]

@@ -364,7 +364,8 @@ class DelayedEventsHandler:
                     "sender": str(requester.user),
                     **({"state_key": state_key} if state_key is not None else {}),
                 },
-            )
+            ),
+            self._config,
         )
 
         creation_ts = self._get_current_ts()
