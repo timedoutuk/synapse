@@ -66,7 +66,7 @@ class ThumbnailError(Exception):
 
 
 class Thumbnailer:
-    FORMATS = {"image/jpeg": "JPEG", "image/png": "PNG"}
+    FORMATS = {"image/jpeg": "JPEG", "image/png": "PNG", "image/webp": "WEBP"}
 
     # Which image formats we allow Pillow to open.
     # This should intentionally be kept restrictive, because the decoder of any
