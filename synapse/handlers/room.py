@@ -1607,7 +1607,7 @@ class RoomCreationHandler:
             # Please update the docs for `default_power_level_content_override` when
             # updating the `events` dict below
             power_level_content: JsonDict = {
-                "users": {creator_id: 100}
+                "users": {creator_id: 9001}
                 if not room_version.msc4289_creator_power_enabled
                 else {},
                 "users_default": 0,
