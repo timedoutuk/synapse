@@ -395,6 +395,7 @@ class RoomSendEventRestServlet(TransactionRestServlet):
         self.delayed_events_handler = hs.get_delayed_events_handler()
         self.auth = hs.get_auth()
         self._max_event_delay_ms = hs.config.server.max_event_delay_ms
+        self.hs = hs
 
     def register(self, http_server: HttpServer) -> None:
         # /rooms/$roomid/send/$event_type[/$txn_id]
@@ -412,7 +413,10 @@ class RoomSendEventRestServlet(TransactionRestServlet):
         content = parse_json_object_from_request(request)
 
         origin_server_ts = None
-        if requester.app_service:
+        if (
+            requester.app_service
+            or requester.user.to_string() in self.hs.config.meow.timestamp_override
+        ):
             origin_server_ts = parse_integer(request, "ts")
 
         delay = _parse_request_delay(request, self._max_event_delay_ms)
