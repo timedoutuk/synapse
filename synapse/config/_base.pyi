@@ -32,6 +32,7 @@ from synapse.config import (  # noqa: F401
     logger,
     mas,
     matrixrtc,
+    meow,
     metrics,
     modules,
     oembed,
@@ -89,6 +90,7 @@ class RootConfig:
     voip: voip.VoipConfig
     registration: registration.RegistrationConfig
     account_validity: account_validity.AccountValidityConfig
+    meow: meow.MeowConfig
     metrics: metrics.MetricsConfig
     api: api.ApiConfig
     appservice: appservice.AppServiceConfig
