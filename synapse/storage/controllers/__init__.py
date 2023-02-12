@@ -45,6 +45,7 @@ class StorageControllers:
         # rewrite all the existing code to split it into high vs low level
         # interfaces.
         self.main = stores.main
+        self.hs = hs
 
         self.purge_events = PurgeEventsStorageController(hs, stores)
         self.state = StateStorageController(hs, stores)

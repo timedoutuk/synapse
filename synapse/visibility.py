@@ -161,6 +161,10 @@ async def filter_events_for_client(
                 room_id
             ] = await storage.main.get_retention_policy_for_room(room_id)
 
+    # meow: let admins see secret events like org.matrix.dummy_event, m.room.aliases
+    #       and events expired by the retention policy.
+    filter_override = user_id in storage.hs.config.meow.filter_override
+
     def allowed(event: EventBase) -> EventBase | None:
         state_after_event = event_id_to_state.get(event.event_id)
         filtered = _check_client_allowed_to_see_event(
@@ -174,6 +178,7 @@ async def filter_events_for_client(
             state=state_after_event,
             is_peeking=is_peeking,
             sender_erased=erased_senders.get(event.sender, False),
+            filter_override=filter_override,
         )
         if filtered is None:
             return None
@@ -350,6 +355,7 @@ def _check_client_allowed_to_see_event(
     retention_policy: RetentionPolicy,
     state: StateMap[EventBase] | None,
     sender_erased: bool,
+    filter_override: bool,
 ) -> EventBase | None:
     """Check with the given user is allowed to see the given event
 
@@ -366,6 +372,7 @@ def _check_client_allowed_to_see_event(
         retention_policy: The retention policy of the room
         state: The state at the event, unless its an outlier
         sender_erased: Whether the event sender has been marked as "erased"
+        filter_override: meow
 
     Returns:
         None if the user cannot see this event at all
@@ -379,7 +386,7 @@ def _check_client_allowed_to_see_event(
     # because, if this is not the case, we're probably only checking if the users can
     # see events in the room at that point in the DAG, and that shouldn't be decided
     # on those checks.
-    if filter_send_to_client:
+    if filter_send_to_client and not filter_override:
         if (
             _check_filter_send_to_client(event, clock, retention_policy, sender_ignored)
             == _CheckFilter.DENIED
@@ -389,6 +396,9 @@ def _check_client_allowed_to_see_event(
                 event.event_id,
             )
             return None
+    # meow: even with filter_override, we want to filter ignored users
+    elif filter_send_to_client and not event.is_state() and sender_ignored:
+        return None
 
     if event.event_id in always_include_ids:
         return event

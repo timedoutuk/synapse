@@ -1160,7 +1160,6 @@ class SyncHandler:
             for e in await sync_config.filter_collection.filter_room_state(
                 list(state.values())
             )
-            if e.type != EventTypes.Aliases  # until MSC2261 or alternative solution
         }
 
     async def _compute_state_delta_for_full_sync(
