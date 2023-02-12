@@ -150,13 +150,6 @@ class HttpPusher(Pusher):
         url = self.data["url"]
         if not isinstance(url, str):
             raise PusherConfigException("'url' must be a string")
-        url_parts = urllib.parse.urlparse(url)
-        # Note that the specification also says the scheme must be HTTPS, but
-        # it isn't up to the homeserver to verify that.
-        if url_parts.path != "/_matrix/push/v1/notify":
-            raise PusherConfigException(
-                "'url' must have a path of '/_matrix/push/v1/notify'"
-            )
 
         self.url = url
         self.http_client = hs.get_proxied_blocklisted_http_client()
