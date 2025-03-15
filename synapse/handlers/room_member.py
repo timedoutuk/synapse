@@ -1012,7 +1012,7 @@ class RoomMemberHandler(metaclass=abc.ABCMeta):
                 bypass_spam_checker = True
 
             else:
-                bypass_spam_checker = await self.auth.is_server_admin(requester)
+                bypass_spam_checker = False
 
             inviter = await self._get_inviter(target.to_string(), room_id)
             if (
