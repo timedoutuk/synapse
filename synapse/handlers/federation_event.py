@@ -499,6 +499,7 @@ class FederationEventHandler:
             event.room_version,
             user_id,
             prev_membership,
+            event.room_id,
         )
 
     @trace
