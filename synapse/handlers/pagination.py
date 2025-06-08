@@ -509,7 +509,7 @@ class PaginationHandler:
         (
             events,
             next_key,
-            _,
+            limited,
         ) = await self.store.paginate_room_events_by_topological_ordering(
             room_id=room_id,
             from_key=from_token.room_key,
@@ -592,7 +592,7 @@ class PaginationHandler:
                 (
                     events,
                     next_key,
-                    _,
+                    limited,
                 ) = await self.store.paginate_room_events_by_topological_ordering(
                     room_id=room_id,
                     from_key=from_token.room_key,
@@ -614,6 +614,15 @@ class PaginationHandler:
                 )
 
         next_token = from_token.copy_and_replace(StreamKeyType.ROOM, next_key)
+
+        # We might have hit some internal filtering first, for example rejected
+        # events. Ensure we return a pagination token then.
+        if not events and limited:
+            return {
+                "chunk": [],
+                "start": await from_token.to_string(self.store),
+                "end": await next_token.to_string(self.store),
+            }
 
         # if no events are returned from pagination, that implies
         # we have reached the end of the available events.
