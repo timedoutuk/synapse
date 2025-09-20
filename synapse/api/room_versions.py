@@ -491,9 +491,9 @@ KNOWN_ROOM_VERSIONS: dict[str, RoomVersion] = {
         RoomVersions.V10,
         RoomVersions.V11,
         RoomVersions.V12,
-        RoomVersions.MSC3757v10,
-        RoomVersions.MSC3757v11,
-        RoomVersions.HydraV11,
+        #RoomVersions.MSC3757v10,
+        #RoomVersions.MSC3757v11,
+        #RoomVersions.HydraV11,
     )
 }
 
